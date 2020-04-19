@@ -5,6 +5,6 @@ For installing needed packages run the following command.
 
     $ pip install -r requirements.txt
 
-Run the following code for start the program.
+Run the following command for starting the program.
 
     $ python planner.py
