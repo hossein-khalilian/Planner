@@ -1,3 +1,4 @@
+#!/home/hse/henv/bin/python
 import os
 import csv
 import kivy
@@ -112,9 +113,9 @@ class Daily(App):
     def clock_callback(self, dt):
         now = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         FMT = "%Y-%m-%d %H:%M:%S"
-        tdelta = datetime.strptime(now, FMT) - datetime.strptime(self.previous, FMT)
+        self.spend_time = datetime.strptime(now, FMT) - datetime.strptime(self.previous, FMT)
         self.time.text = 'Time: ' + now
-        self.delta.text = 'Spend time: ' + str(tdelta)
+        self.delta.text = 'Spend time: ' + str(self.spend_time)
 
 
 
