@@ -1,4 +1,3 @@
-#!/home/hse/henv/bin/python
 import os
 import csv
 import kivy
