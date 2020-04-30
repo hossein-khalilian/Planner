@@ -1,10 +1,8 @@
 #!/home/hse/henv/bin/python
 import os
-os.environ["KIVY_NO_FILELOG"] = "1"
-os.environ["KIVY_NO_CONSOLELOG"] = "1"
+import csv
 import kivy
 import pause
-import pandas as pd
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.label import Label
@@ -21,6 +19,8 @@ Config.set('kivy','log_enable', '0')
 Config.set('graphics', 'width', '500')
 Config.set('graphics', 'height', '200')
 # Config.write()
+os.environ["KIVY_NO_FILELOG"] = "1"
+os.environ["KIVY_NO_CONSOLELOG"] = "1"
 
 
 class Title(TextInput):
@@ -30,22 +30,26 @@ class Title(TextInput):
 class Daily(App):
 
     def build(self):
-        self.csvpath = '/home/hse/DailyPlan/DailyTime.csv'
+        directory = '/home/user/data/'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        self.csvpath = directory + 'DailyTime.csv'
         if not os.path.exists(self.csvpath):
-            data = {
-                'time': [str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))], 
-                'type': ['start'],
-                'title': ['start'],
-                'description': ['start']
-                }
-            df = pd.DataFrame(data=data)
-            df.to_csv( self.csvpath, mode='w',index=False, sep=',')
+            data = [[str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), '0:00:0', '', 'start', '']]
+            header = ['time', 'spend_time', 'type', 'title', 'description']
+            data.insert(0, header)
+            with open(self.csvpath, 'w') as file:
+                writer = csv.writer(file, delimiter=',')
+                writer.writerows(data)
+
+        with open(self.csvpath) as csvfile:
+            rows = list(csv.reader(csvfile, delimiter=','))
+            data = rows[1:]
             
-        df1 = pd.read_csv( self.csvpath, sep=',')
-        self.previous = df1.iloc[0]['time']
+        self.previous = data[0][0]
         now = str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         FMT = "%Y-%m-%d %H:%M:%S"
-        tdelta = datetime.strptime(now, FMT) - datetime.strptime(self.previous, FMT)
+        self.spend_time = datetime.strptime(now, FMT) - datetime.strptime(self.previous, FMT)
 
         self.boxl = BoxLayout(orientation='horizontal', spacing=.1, size_hint=(1, .55))
         self.lbl = Label(text='What have you been up to since ' + str(self.previous), size_hint=(1, 1))
@@ -53,7 +57,7 @@ class Daily(App):
 
         self.boxt = BoxLayout(orientation='horizontal', spacing=.1, size_hint=(1, .45),)
         self.time = Label(text='Time:' + datetime.now().strftime("%Y-%m-%d %H:%M:%S"), size_hint=(1, 1))
-        self.delta = Label(text='Spend time: ' + str(tdelta), size_hint=(1, 1))
+        self.delta = Label(text='Spend time: ' + str(self.spend_time), size_hint=(1, 1))
         self.boxt.add_widget(self.time)
         self.boxt.add_widget(self.delta)
 
@@ -92,16 +96,17 @@ class Daily(App):
 
 
     def store(self, instance):
-        data = {
-        	'time': [str(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))], 
-         	'type': [instance.text],
-            'title': [self.title1.text],
-         	'description': [self.txt.text]
-         	}
-        df = pd.DataFrame(data=data)
-        df1 = pd.read_csv( self.csvpath, sep=',')
-        df = pd.concat([df, df1], keys=['time', 'type', 'title', 'description'])
-        df.to_csv( self.csvpath, mode='w',index=False, sep=',')
+        with open(self.csvpath) as csvfile:
+            rows = list(csv.reader(csvfile, delimiter=','))
+            header = rows[0]
+            data = rows[1:]
+            newrow = [str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")), self.spend_time.total_seconds(), instance.text, self.title1.text, self.txt.text]
+            data.insert(0, newrow)
+            data.insert(0,header)
+
+        with open(self.csvpath, 'w') as file:
+                writer = csv.writer(file, delimiter=',')
+                writer.writerows(data)
         App.get_running_app().stop()
     
 
